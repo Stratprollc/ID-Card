@@ -17,7 +17,7 @@ const getImageDimensions = (base64: string): Promise<{ width: number, height: nu
   });
 };
 
-const processImageForPhotocopy = (base64: string): Promise<string> => {
+const processImageForPhotocopy = (base64: string, colorMode: 'bw' | 'color'): Promise<string> => {
   return new Promise((resolve) => {
     const img = new Image();
     img.crossOrigin = "anonymous";
@@ -31,71 +31,24 @@ const processImageForPhotocopy = (base64: string): Promise<string> => {
         return;
       }
 
-      // Create rounded clipping path
-      const radius = Math.min(img.width, img.height) * 0.04; // Subtle rounding
-      ctx.beginPath();
-      ctx.moveTo(radius, 0);
-      ctx.lineTo(img.width - radius, 0);
-      ctx.quadraticCurveTo(img.width, 0, img.width, radius);
-      ctx.lineTo(img.width, img.height - radius);
-      ctx.quadraticCurveTo(img.width, img.height, img.width - radius, img.height);
-      ctx.lineTo(radius, img.height);
-      ctx.quadraticCurveTo(0, img.height, 0, img.height - radius);
-      ctx.lineTo(0, radius);
-      ctx.quadraticCurveTo(0, 0, radius, 0);
-      ctx.closePath();
-      ctx.clip();
+      // Fill with white first to avoid black backgrounds on transparent PNGs
+      ctx.fillStyle = 'white';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Apply Grayscale and subtle Contrast for a clear, natural Photocopy look
-      ctx.filter = 'grayscale(100%) contrast(1.1) brightness(1.0)';
+      // Apply Grayscale and subtle Contrast for a clear, natural Photocopy look if in B&W mode
+      if (colorMode === 'bw') {
+        ctx.filter = 'grayscale(100%) contrast(1.1)';
+      }
       ctx.drawImage(img, 0, 0);
       
-      // SHARPENING KERNEL: To clear up blurry images
-      // We process pixels to enhance edges
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const pixels = imageData.data;
-      const width = imageData.width;
-      const height = imageData.height;
-      const output = ctx.createImageData(width, height);
-      const outputData = output.data;
-
-      // 3x3 Sharpening Kernel:
-      // [ 0, -1,  0 ]
-      // [-1,  5, -1 ]
-      // [ 0, -1,  0 ]
-      const kernel = [
-        0, -1, 0,
-        -1, 5, -1,
-        0, -1, 0
-      ];
-
-      for (let y = 1; y < height - 1; y++) {
-        for (let x = 1; x < width - 1; x++) {
-          for (let c = 0; c < 3; c++) { // R, G, B
-            let sum = 0;
-            for (let ky = -1; ky <= 1; ky++) {
-              for (let kx = -1; kx <= 1; kx++) {
-                const pixelIdx = ((y + ky) * width + (x + kx)) * 4 + c;
-                const kernelIdx = (ky + 1) * 3 + (kx + 1);
-                sum += pixels[pixelIdx] * kernel[kernelIdx];
-              }
-            }
-            const idx = (y * width + x) * 4 + c;
-            outputData[idx] = Math.min(255, Math.max(0, sum));
-          }
-          outputData[(y * width + x) * 4 + 3] = 255; // Alpha
-        }
-      }
-      ctx.putImageData(output, 0, 0);
-      
-      resolve(canvas.toDataURL('image/jpeg', 1.0));
+      resolve(canvas.toDataURL('image/jpeg', 0.95));
     };
     img.src = base64;
   });
 };
 
 export const generatePDF = async (sets: CardSet[], settings: PrintSettings) => {
-  const { pageSize, layoutMode, content, preset, showCutLines } = settings;
+  const { pageSize, layoutMode, content, preset, fitMode, colorMode } = settings;
   const portraitDim = PAGE_DIMENSIONS[pageSize];
   
   // Use landscape orientation
@@ -109,12 +62,9 @@ export const generatePDF = async (sets: CardSet[], settings: PrintSettings) => {
   });
 
   const drawCard = async (imgData: string, x: number, y: number) => {
-    doc.setFillColor(255, 255, 255);
-    doc.rect(x, y, CARD_WIDTH_IN, CARD_HEIGHT_IN, 'F');
-    
     try {
-      // Process image for photocopy look (B&W + Rounded)
-      const processedImg = await processImageForPhotocopy(imgData);
+      // Process image for photocopy look (B&W) or keep color
+      const processedImg = await processImageForPhotocopy(imgData, colorMode);
       const dims = await getImageDimensions(processedImg);
       const cardAspect = CARD_WIDTH_IN / CARD_HEIGHT_IN;
       const imgAspect = dims.width / dims.height;
@@ -124,23 +74,24 @@ export const generatePDF = async (sets: CardSet[], settings: PrintSettings) => {
       let drawX = x;
       let drawY = y;
       
-      if (imgAspect > cardAspect) {
-        drawH = CARD_WIDTH_IN / imgAspect;
-        drawY = y + (CARD_HEIGHT_IN - drawH) / 2;
-      } else {
-        drawW = CARD_HEIGHT_IN * imgAspect;
-        drawX = x + (CARD_WIDTH_IN - drawW) / 2;
+      // Always use 'contain' logic to avoid cropping, unless user explicitly wants fill
+      if (fitMode === 'contain') {
+        if (imgAspect > cardAspect) {
+          drawH = CARD_WIDTH_IN / imgAspect;
+          drawY = y + (CARD_HEIGHT_IN - drawH) / 2;
+        } else {
+          drawW = CARD_HEIGHT_IN * imgAspect;
+          drawX = x + (CARD_WIDTH_IN - drawW) / 2;
+        }
       }
+      
+      // Add a very subtle shadow behind the card (extremely light gray)
+      doc.setFillColor(250, 250, 250);
+      doc.rect(drawX + 0.005, drawY + 0.005, drawW, drawH, 'F');
       
       doc.addImage(processedImg, 'JPEG', drawX, drawY, drawW, drawH, undefined, 'FAST');
     } catch (e) {
       doc.addImage(imgData, 'JPEG', x, y, CARD_WIDTH_IN, CARD_HEIGHT_IN, undefined, 'FAST');
-    }
-    
-    if (showCutLines) {
-      doc.setDrawColor(220, 220, 220);
-      doc.setLineWidth(0.005);
-      doc.rect(x, y, CARD_WIDTH_IN, CARD_HEIGHT_IN, 'S');
     }
   };
 
@@ -151,10 +102,11 @@ export const generatePDF = async (sets: CardSet[], settings: PrintSettings) => {
 
   if (layoutMode === 'single') {
     const set = sets[0];
-    const centerX = halfPageW / 2; // Center of the left half
+    const rightMargin = 0.9; 
+    const rightX = pageW - CARD_WIDTH_IN - rightMargin; // Position on the right side with 0.9" margin
     
-    if (set.frontImage) await drawCard(set.frontImage, centerX - CARD_WIDTH_IN / 2, marginY);
-    if (set.backImage) await drawCard(set.backImage, centerX - CARD_WIDTH_IN / 2, marginY + CARD_HEIGHT_IN + spacingY);
+    if (set.frontImage) await drawCard(set.frontImage, rightX, marginY);
+    if (set.backImage) await drawCard(set.backImage, rightX, marginY + CARD_HEIGHT_IN + spacingY);
   } else {
     // Double mode: Set 1 in left half, Set 2 in right half
     const set1 = sets[0];
@@ -169,14 +121,6 @@ export const generatePDF = async (sets: CardSet[], settings: PrintSettings) => {
     const centerX2 = halfPageW + (halfPageW / 2);
     if (set2?.frontImage) await drawCard(set2.frontImage, centerX2 - CARD_WIDTH_IN / 2, marginY);
     if (set2?.backImage) await drawCard(set2.backImage, centerX2 - CARD_WIDTH_IN / 2, marginY + CARD_HEIGHT_IN + spacingY);
-  }
-
-  if (showCutLines) {
-    doc.setDrawColor(180, 180, 180);
-    doc.setLineDashPattern([0.1, 0.1], 0);
-    // Vertical cut line in the middle
-    doc.line(pageW / 2, 0, pageW / 2, pageH);
-    doc.setLineDashPattern([], 0);
   }
 
   doc.save(`${sets[0].title || 'card-print'}.pdf`);

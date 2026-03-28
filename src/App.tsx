@@ -30,7 +30,8 @@ export default function App() {
     layoutMode: 'single',
     content: 'both',
     preset: 'side-by-side',
-    showCutLines: true,
+    fitMode: 'contain',
+    colorMode: 'bw',
   });
   const [isGenerating, setIsGenerating] = useState(false);
 
@@ -76,7 +77,7 @@ export default function App() {
       <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-bottom border-gray-200">
         <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-blue-600 flex items-center justify-center">
               <Printer className="w-5 h-5 text-white" />
             </div>
             <h1 className="text-xl font-semibold tracking-tight">BD Card Print Pro</h1>
@@ -90,7 +91,7 @@ export default function App() {
                   layoutMode: 'single',
                   content: 'both',
                   preset: 'side-by-side',
-                  showCutLines: true,
+                  fitMode: 'contain',
                 });
               }}
               className="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors"
@@ -100,9 +101,9 @@ export default function App() {
             <button 
               onClick={handlePrint}
               disabled={!isReady || isGenerating}
-              className={`flex items-center gap-2 px-5 py-2 rounded-full font-medium transition-all ${
+              className={`flex items-center gap-2 px-5 py-2 font-medium transition-all ${
                 isReady && !isGenerating 
-                  ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-200 active:scale-95' 
+                  ? 'bg-blue-600 text-white hover:bg-blue-700 active:scale-95' 
                   : 'bg-gray-200 text-gray-400 cursor-not-allowed'
               }`}
             >
@@ -121,7 +122,7 @@ export default function App() {
         {/* Left Column: Job Management */}
         <div className="lg:col-span-8 space-y-8">
           {/* Live Preview Section */}
-          <section className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
+          <section className="bg-white p-8 border border-gray-100">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold">Layout Preview</h2>
               <div className="flex items-center gap-2 text-xs text-gray-400">
@@ -129,9 +130,9 @@ export default function App() {
                 <span>Scaled to fit screen</span>
               </div>
             </div>
-            <div className="flex justify-center bg-gray-50 rounded-2xl p-6 border border-gray-100">
+            <div className="flex justify-center bg-gray-50 p-6 border border-gray-100">
               <div 
-                className="bg-white shadow-2xl border border-gray-200 relative overflow-hidden"
+                className="bg-white border border-gray-200 relative overflow-hidden"
                 style={{ 
                   width: settings.pageSize === 'A4' ? '340px' : '400px', 
                   height: '240px',
@@ -139,23 +140,19 @@ export default function App() {
                 }}
               >
                 {/* Preview Cards */}
-                <div className="absolute inset-0 p-4 flex flex-row items-center justify-around">
-                  {/* Left Half */}
+                <div className={`absolute inset-0 p-4 flex flex-row items-center ${settings.layoutMode === 'double' ? 'justify-around' : 'justify-end pr-[0.9in]'}`}>
+                  {/* Left Half (Single Set) */}
                   <div className="flex flex-col gap-2 items-center">
-                    <PreviewCard image={sets[0].frontImage} label="F1" />
-                    <PreviewCard image={sets[0].backImage} label="B1" />
+                    <PreviewCard image={sets[0].frontImage} label="F1" fitMode={settings.fitMode} colorMode={settings.colorMode} />
+                    <PreviewCard image={sets[0].backImage} label="B1" fitMode={settings.fitMode} colorMode={settings.colorMode} />
                   </div>
 
                   {/* Right Half (if double) */}
                   {settings.layoutMode === 'double' && (
                     <div className="flex flex-col gap-2 items-center">
-                      <PreviewCard image={sets[1]?.frontImage} label="F2" />
-                      <PreviewCard image={sets[1]?.backImage} label="B2" />
+                      <PreviewCard image={sets[1]?.frontImage} label="F2" fitMode={settings.fitMode} colorMode={settings.colorMode} />
+                      <PreviewCard image={sets[1]?.backImage} label="B2" fitMode={settings.fitMode} colorMode={settings.colorMode} />
                     </div>
-                  )}
-
-                  {settings.showCutLines && (
-                    <div className="absolute top-0 left-1/2 h-full border-l border-dashed border-gray-300" />
                   )}
                 </div>
               </div>
@@ -184,19 +181,19 @@ export default function App() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.95 }}
-                    className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100 relative group"
+                    className="bg-white p-8 border border-gray-100 relative group"
                   >
                     {sets.length > 1 && (
                       <button 
                         onClick={() => removeSet(set.id)}
-                        className="absolute top-6 right-6 p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-all opacity-0 group-hover:opacity-100"
+                        className="absolute top-6 right-6 p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all opacity-0 group-hover:opacity-100"
                       >
                         <Trash2 className="w-5 h-5" />
                       </button>
                     )}
 
                     <div className="flex items-center gap-3 mb-8">
-                      <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center font-bold">
+                      <div className="w-10 h-10 bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
                         {index + 1}
                       </div>
                       <input 
@@ -216,6 +213,8 @@ export default function App() {
                           image={set.frontImage} 
                           onUpload={(file) => handleImageUpload(set.id, 'front', file)}
                           onClear={() => setSets(prev => prev.map(s => s.id === set.id ? { ...s, frontImage: null } : s))}
+                          fitMode={settings.fitMode}
+                          colorMode={settings.colorMode}
                         />
                       </div>
 
@@ -226,6 +225,8 @@ export default function App() {
                           image={set.backImage} 
                           onUpload={(file) => handleImageUpload(set.id, 'back', file)}
                           onClear={() => setSets(prev => prev.map(s => s.id === set.id ? { ...s, backImage: null } : s))}
+                          fitMode={settings.fitMode}
+                          colorMode={settings.colorMode}
                         />
                       </div>
                     </div>
@@ -236,9 +237,9 @@ export default function App() {
           </section>
 
           {/* Print Instructions */}
-          <section className="bg-blue-50/50 rounded-3xl p-8 border border-blue-100">
+          <section className="bg-blue-50/50 p-8 border border-blue-100">
             <div className="flex gap-4">
-              <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm">
+              <div className="w-12 h-12 bg-white flex items-center justify-center shadow-sm">
                 <Info className="w-6 h-6 text-blue-600" />
               </div>
               <div>
@@ -264,7 +265,7 @@ export default function App() {
 
         {/* Right Column: Settings */}
         <div className="lg:col-span-4 space-y-8">
-          <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100 sticky top-24">
+          <div className="bg-white p-8 border border-gray-100 sticky top-24">
             <div className="flex items-center gap-2 mb-8">
               <Settings2 className="w-5 h-5 text-blue-600" />
               <h2 className="text-xl font-bold">Print Settings</h2>
@@ -279,7 +280,7 @@ export default function App() {
                     <button
                       key={size}
                       onClick={() => setSettings(prev => ({ ...prev, pageSize: size }))}
-                      className={`py-3 px-4 rounded-2xl text-sm font-medium transition-all border ${
+                      className={`py-3 px-4 text-sm font-medium transition-all border ${
                         settings.pageSize === size 
                           ? 'bg-blue-50 border-blue-200 text-blue-700 shadow-sm' 
                           : 'bg-white border-gray-100 text-gray-500 hover:border-gray-200'
@@ -302,7 +303,7 @@ export default function App() {
                         if (mode === 'double' && sets.length < 2) addSet();
                         setSettings(prev => ({ ...prev, layoutMode: mode }));
                       }}
-                      className={`flex items-center justify-between py-3 px-4 rounded-2xl text-sm font-medium transition-all border ${
+                      className={`flex items-center justify-between py-3 px-4 text-sm font-medium transition-all border ${
                         settings.layoutMode === mode 
                           ? 'bg-blue-50 border-blue-200 text-blue-700 shadow-sm' 
                           : 'bg-white border-gray-100 text-gray-500 hover:border-gray-200'
@@ -323,9 +324,9 @@ export default function App() {
                     <button
                       key={p}
                       onClick={() => setSettings(prev => ({ ...prev, preset: p as any }))}
-                      className={`flex items-center justify-between py-3 px-4 rounded-2xl text-sm font-medium transition-all border ${
+                      className={`flex items-center justify-between py-3 px-4 text-sm font-medium transition-all border ${
                         settings.preset === p 
-                          ? 'bg-blue-50 border-blue-200 text-blue-700 shadow-sm' 
+                          ? 'bg-blue-50 border-blue-200 text-blue-700' 
                           : 'bg-white border-gray-100 text-gray-500 hover:border-gray-200'
                       }`}
                     >
@@ -349,9 +350,9 @@ export default function App() {
                     <button
                       key={c}
                       onClick={() => setSettings(prev => ({ ...prev, content: c }))}
-                      className={`flex items-center justify-between py-3 px-4 rounded-2xl text-sm font-medium transition-all border ${
+                      className={`flex items-center justify-between py-3 px-4 text-sm font-medium transition-all border ${
                         settings.content === c 
-                          ? 'bg-blue-50 border-blue-200 text-blue-700 shadow-sm' 
+                          ? 'bg-blue-50 border-blue-200 text-blue-700' 
                           : 'bg-white border-gray-100 text-gray-500 hover:border-gray-200'
                       }`}
                     >
@@ -362,17 +363,52 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Toggles */}
-              <div className="pt-4 border-t border-gray-100">
-                <label className="flex items-center justify-between cursor-pointer group">
-                  <span className="text-sm font-semibold text-gray-600 group-hover:text-gray-900 transition-colors">Show Cut Lines</span>
-                  <div 
-                    onClick={() => setSettings(prev => ({ ...prev, showCutLines: !prev.showCutLines }))}
-                    className={`w-12 h-6 rounded-full transition-all relative ${settings.showCutLines ? 'bg-blue-600' : 'bg-gray-200'}`}
-                  >
-                    <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${settings.showCutLines ? 'left-7' : 'left-1'}`} />
-                  </div>
-                </label>
+              {/* Color Mode */}
+              <div className="space-y-3">
+                <label className="text-sm font-semibold text-gray-600">Print Color</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { id: 'bw', label: 'B&W', desc: 'Photocopy look' },
+                    { id: 'color', label: 'Color', desc: 'Original colors' }
+                  ].map((c) => (
+                    <button
+                      key={c.id}
+                      onClick={() => setSettings(prev => ({ ...prev, colorMode: c.id as any }))}
+                      className={`flex flex-col items-start py-3 px-4 text-sm font-medium transition-all border ${
+                        settings.colorMode === c.id 
+                          ? 'bg-blue-50 border-blue-200 text-blue-700' 
+                          : 'bg-white border-gray-100 text-gray-500 hover:border-gray-200'
+                      }`}
+                    >
+                      <span>{c.label}</span>
+                      <span className="text-[10px] opacity-50">{c.desc}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Image Fitting */}
+              <div className="space-y-3">
+                <label className="text-sm font-semibold text-gray-600">Image Scaling</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { id: 'fill', label: 'Fill Card', desc: 'Stretch to fit' },
+                    { id: 'contain', label: 'Fit Inside', desc: 'Keep aspect' }
+                  ].map((f) => (
+                    <button
+                      key={f.id}
+                      onClick={() => setSettings(prev => ({ ...prev, fitMode: f.id as any }))}
+                      className={`flex flex-col items-start py-3 px-4 text-sm font-medium transition-all border ${
+                        settings.fitMode === f.id 
+                          ? 'bg-blue-50 border-blue-200 text-blue-700' 
+                          : 'bg-white border-gray-100 text-gray-500 hover:border-gray-200'
+                      }`}
+                    >
+                      <span>{f.label}</span>
+                      <span className="text-[10px] opacity-50">{f.desc}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
@@ -382,11 +418,14 @@ export default function App() {
   );
 }
 
-function PreviewCard({ image, label }: { image: string | null, label: string }) {
+function PreviewCard({ image, label, fitMode, colorMode }: { image: string | null, label: string, fitMode: string, colorMode: string }) {
   return (
-    <div className="w-[100px] h-[63px] bg-gray-100 rounded-md border border-gray-200 flex items-center justify-center overflow-hidden relative">
+    <div className={`w-[100px] h-[63px] flex items-center justify-center overflow-hidden relative ${!image ? 'bg-gray-100 border border-gray-200' : ''}`}>
       {image ? (
-        <img src={image} className="w-full h-full object-cover opacity-80" />
+        <img 
+          src={image} 
+          className={`w-full h-full ${colorMode === 'bw' ? 'grayscale contrast-125' : ''} ${fitMode === 'fill' ? 'object-fill' : 'object-contain'}`} 
+        />
       ) : (
         <span className="text-[10px] font-bold text-gray-400">{label}</span>
       )}
@@ -394,15 +433,21 @@ function PreviewCard({ image, label }: { image: string | null, label: string }) 
   );
 }
 
-function ImageUploader({ image, onUpload, onClear }: { image: string | null, onUpload: (file: File) => void, onClear: () => void }) {
+function ImageUploader({ image, onUpload, onClear, fitMode, colorMode }: { 
+  image: string | null, 
+  onUpload: (file: File) => void, 
+  onClear: () => void,
+  fitMode: string,
+  colorMode: string
+}) {
   const inputRef = useRef<HTMLInputElement>(null);
 
   return (
     <div 
       onClick={() => !image && inputRef.current?.click()}
-      className={`relative aspect-[3.375/2.125] uploader-subtle-radius border-2 border-dashed transition-all overflow-hidden flex flex-col items-center justify-center gap-3 cursor-pointer ${
+      className={`relative aspect-[3.375/2.125] border-2 border-dashed transition-all overflow-hidden flex flex-col items-center justify-center gap-3 cursor-pointer ${
         image 
-          ? 'border-transparent bg-gray-50' 
+          ? 'border-transparent' 
           : 'border-gray-200 bg-gray-50 hover:bg-gray-100 hover:border-blue-300'
       }`}
     >
@@ -416,7 +461,11 @@ function ImageUploader({ image, onUpload, onClear }: { image: string | null, onU
       
       {image ? (
         <>
-          <img src={image} alt="Preview" className="w-full h-full object-contain" />
+          <img 
+            src={image} 
+            alt="Preview" 
+            className={`w-full h-full ${fitMode === 'fill' ? 'object-fill' : 'object-contain'} ${colorMode === 'bw' ? 'grayscale contrast-125' : ''}`} 
+          />
           <div className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
             <button 
               onClick={(e) => { e.stopPropagation(); inputRef.current?.click(); }}
