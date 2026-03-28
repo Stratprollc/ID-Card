@@ -35,11 +35,48 @@ const processImageForPhotocopy = (base64: string, colorMode: 'bw' | 'color'): Pr
       ctx.fillStyle = 'white';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Apply Grayscale and subtle Contrast for a clear, natural Photocopy look if in B&W mode
+      // Set high-quality image smoothing for better clarity
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+
+      // Apply enhancement filters for clarity and sharpness
       if (colorMode === 'bw') {
-        ctx.filter = 'grayscale(100%) contrast(1.1)';
+        // High-quality photocopy look: grayscale, boosted contrast, and slight brightness to keep text crisp
+        // This makes details pop without blowing out the image
+        ctx.filter = 'grayscale(100%) contrast(1.25) brightness(1.05)';
+      } else {
+        // Natural enhancement for color: subtle contrast, brightness, and saturation to make details pop
+        ctx.filter = 'contrast(1.12) brightness(1.02) saturate(1.08)';
       }
+      
       ctx.drawImage(img, 0, 0);
+
+      // Apply sharpening for better readability of text and details
+      // We only do this if the image isn't too large to avoid performance issues
+      if (img.width * img.height < 4000000) { // Limit to ~4MP images
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const data = imageData.data;
+        const originalData = new Uint8ClampedArray(data);
+        const kernel = [0, -1, 0, -1, 5, -1, 0, -1, 0];
+        const w = canvas.width;
+        const h = canvas.height;
+
+        for (let y = 1; y < h - 1; y++) {
+          for (let x = 1; x < w - 1; x++) {
+            const idx = (y * w + x) * 4;
+            for (let c = 0; c < 3; c++) {
+              let sum = 0;
+              for (let ky = -1; ky <= 1; ky++) {
+                for (let kx = -1; kx <= 1; kx++) {
+                  sum += originalData[((y + ky) * w + (x + kx)) * 4 + c] * kernel[(ky + 1) * 3 + (kx + 1)];
+                }
+              }
+              data[idx + c] = Math.min(255, Math.max(0, sum));
+            }
+          }
+        }
+        ctx.putImageData(imageData, 0, 0);
+      }
       
       resolve(canvas.toDataURL('image/jpeg', 0.95));
     };
