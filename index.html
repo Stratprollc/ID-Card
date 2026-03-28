@@ -3,7 +3,23 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>My Google AI Studio App</title>
+    <title>BD Card Print Pro</title>
+    <script>
+      // Robust fetch guard to prevent "only a getter" TypeError
+      (function() {
+        var _f = window.fetch;
+        try {
+          Object.defineProperty(window, 'fetch', {
+            get: function() { return _f; },
+            set: function(v) { _f = v; }, // Allow setting without throwing error
+            configurable: true,
+            enumerable: true
+          });
+        } catch (e) {
+          // If we can't redefine it, we'll try to handle it gracefully
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
