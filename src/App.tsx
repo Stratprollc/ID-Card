@@ -400,7 +400,7 @@ function ImageUploader({ image, onUpload, onClear }: { image: string | null, onU
   return (
     <div 
       onClick={() => !image && inputRef.current?.click()}
-      className={`relative aspect-[3.375/2.125] rounded-2xl border-2 border-dashed transition-all overflow-hidden flex flex-col items-center justify-center gap-3 cursor-pointer ${
+      className={`relative aspect-[3.375/2.125] uploader-subtle-radius border-2 border-dashed transition-all overflow-hidden flex flex-col items-center justify-center gap-3 cursor-pointer ${
         image 
           ? 'border-transparent bg-gray-50' 
           : 'border-gray-200 bg-gray-50 hover:bg-gray-100 hover:border-blue-300'

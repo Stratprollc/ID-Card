@@ -1,1 +1,5 @@
 @import "tailwindcss";
+
+.uploader-subtle-radius {
+  border-radius: 12px;
+}
