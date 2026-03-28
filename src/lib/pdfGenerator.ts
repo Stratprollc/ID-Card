@@ -46,11 +46,49 @@ const processImageForPhotocopy = (base64: string): Promise<string> => {
       ctx.closePath();
       ctx.clip();
 
-      // Apply Grayscale and Contrast for Photocopy look
-      ctx.filter = 'grayscale(100%) contrast(1.3) brightness(1.05)';
+      // Apply Grayscale and subtle Contrast for a clear, natural Photocopy look
+      ctx.filter = 'grayscale(100%) contrast(1.1) brightness(1.0)';
       ctx.drawImage(img, 0, 0);
       
-      resolve(canvas.toDataURL('image/jpeg', 0.85));
+      // SHARPENING KERNEL: To clear up blurry images
+      // We process pixels to enhance edges
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const pixels = imageData.data;
+      const width = imageData.width;
+      const height = imageData.height;
+      const output = ctx.createImageData(width, height);
+      const outputData = output.data;
+
+      // 3x3 Sharpening Kernel:
+      // [ 0, -1,  0 ]
+      // [-1,  5, -1 ]
+      // [ 0, -1,  0 ]
+      const kernel = [
+        0, -1, 0,
+        -1, 5, -1,
+        0, -1, 0
+      ];
+
+      for (let y = 1; y < height - 1; y++) {
+        for (let x = 1; x < width - 1; x++) {
+          for (let c = 0; c < 3; c++) { // R, G, B
+            let sum = 0;
+            for (let ky = -1; ky <= 1; ky++) {
+              for (let kx = -1; kx <= 1; kx++) {
+                const pixelIdx = ((y + ky) * width + (x + kx)) * 4 + c;
+                const kernelIdx = (ky + 1) * 3 + (kx + 1);
+                sum += pixels[pixelIdx] * kernel[kernelIdx];
+              }
+            }
+            const idx = (y * width + x) * 4 + c;
+            outputData[idx] = Math.min(255, Math.max(0, sum));
+          }
+          outputData[(y * width + x) * 4 + 3] = 255; // Alpha
+        }
+      }
+      ctx.putImageData(output, 0, 0);
+      
+      resolve(canvas.toDataURL('image/jpeg', 1.0));
     };
     img.src = base64;
   });
