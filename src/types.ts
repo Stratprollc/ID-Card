@@ -10,6 +10,7 @@ export interface CardSet {
   title: string;
   frontImage: string | null;
   backImage: string | null;
+  selected?: boolean;
 }
 
 export interface PrintSettings {
@@ -19,4 +20,16 @@ export interface PrintSettings {
   preset: LayoutPreset;
   fitMode: FitMode;
   colorMode: ColorMode;
+  sharpenLevel: number; // 0 to 1
+  contrastLevel: number; // 1 to 2
+  brightnessLevel: number; // 0.5 to 1.5
+  saturationLevel: number; // 0 to 2
+  gammaLevel: number; // 0.5 to 2.5
+}
+
+export interface PrintTemplate {
+  id: string;
+  name: string;
+  description: string;
+  settings: Partial<PrintSettings>;
 }
