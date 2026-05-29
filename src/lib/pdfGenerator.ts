@@ -186,8 +186,8 @@ export const generatePDF = async (sets: CardSet[], settings: PrintSettings) => {
       const rightMargin = 0.9; 
       const rightX = pageW - CARD_WIDTH_IN - rightMargin; // Position on the right side with 0.9" margin
       
-      if (set.frontImage) await drawCard(set.frontImage, rightX, marginY);
-      if (set.backImage) await drawCard(set.backImage, rightX, marginY + CARD_HEIGHT_IN + spacingY);
+      if (set.frontImage && (content === 'both' || content === 'front-only')) await drawCard(set.frontImage, rightX, marginY);
+      if (set.backImage && (content === 'both' || content === 'back-only')) await drawCard(set.backImage, rightX, marginY + CARD_HEIGHT_IN + spacingY);
 
       // Draw horizontal guides for single set
       const midY = marginY + CARD_HEIGHT_IN + (spacingY / 2);
@@ -203,14 +203,14 @@ export const generatePDF = async (sets: CardSet[], settings: PrintSettings) => {
 
       // Left Half (Set 1)
       const centerX1 = halfPageW / 2;
-      if (set1.frontImage) await drawCard(set1.frontImage, centerX1 - CARD_WIDTH_IN / 2, marginY);
-      if (set1.backImage) await drawCard(set1.backImage, centerX1 - CARD_WIDTH_IN / 2, marginY + CARD_HEIGHT_IN + spacingY);
+      if (set1.frontImage && (content === 'both' || content === 'front-only')) await drawCard(set1.frontImage, centerX1 - CARD_WIDTH_IN / 2, marginY);
+      if (set1.backImage && (content === 'both' || content === 'back-only')) await drawCard(set1.backImage, centerX1 - CARD_WIDTH_IN / 2, marginY + CARD_HEIGHT_IN + spacingY);
 
       // Right Half (Set 2)
       if (set2) {
         const centerX2 = halfPageW + (halfPageW / 2);
-        if (set2.frontImage) await drawCard(set2.frontImage, centerX2 - CARD_WIDTH_IN / 2, marginY);
-        if (set2.backImage) await drawCard(set2.backImage, centerX2 - CARD_WIDTH_IN / 2, marginY + CARD_HEIGHT_IN + spacingY);
+        if (set2.frontImage && (content === 'both' || content === 'front-only')) await drawCard(set2.frontImage, centerX2 - CARD_WIDTH_IN / 2, marginY);
+        if (set2.backImage && (content === 'both' || content === 'back-only')) await drawCard(set2.backImage, centerX2 - CARD_WIDTH_IN / 2, marginY + CARD_HEIGHT_IN + spacingY);
       }
 
       // Draw Vertical Center Cutting Guide
@@ -237,5 +237,5 @@ export const generatePDF = async (sets: CardSet[], settings: PrintSettings) => {
     }
   }
 
-  doc.save(`${sets[0].title || 'card-print'}.pdf`);
+  doc.save(`${sets.map(s => s.title).filter(Boolean).join('_') || 'card-print'}.pdf`);
 };
