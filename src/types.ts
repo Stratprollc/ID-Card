@@ -33,3 +33,30 @@ export interface PrintTemplate {
   description: string;
   settings: Partial<PrintSettings>;
 }
+
+export interface NIDInfo {
+  id?: string;
+  nameBangla: string;
+  nameEnglish: string;
+  fatherName: string;
+  motherName: string;
+  dob: string;
+  nidNumber: string;
+  gender?: string;
+  bloodGroup?: string;
+  address?: string;
+  division?: string;
+  district?: string;
+  upazila?: string;
+  union?: string;
+  ward?: string;
+  mobile?: string;
+  pictureUrl?: string;
+  photoCropBox?: number[];
+  status?: 'Alive' | 'Dead';
+  livingLocation?: 'Local' | 'Foreign';
+  occupation?: 'Government' | 'Other';
+  notes?: string;
+  createdAt?: any;
+  updatedAt?: any;
+}

@@ -1,0 +1,26 @@
+{
+  "entities": {
+    "NIDInfo": {
+      "title": "NID Information",
+      "description": "Extracted information from a Bangladesh NID card",
+      "type": "object",
+      "properties": {
+        "nameBangla": { "type": "string", "description": "Name in Bangla" },
+        "nameEnglish": { "type": "string", "description": "Name in English" },
+        "fatherName": { "type": "string", "description": "Father's Name" },
+        "motherName": { "type": "string", "description": "Mother's Name" },
+        "dob": { "type": "string", "description": "Date of Birth" },
+        "nidNumber": { "type": "string", "description": "NID Number" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["nameBangla", "nameEnglish", "dob", "nidNumber"]
+    }
+  },
+  "firestore": {
+    "nids": {
+      "schema": "NIDInfo",
+      "description": "Collection of saved NID records"
+    }
+  }
+}

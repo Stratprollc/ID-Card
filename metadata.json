@@ -1,5 +1,6 @@
 {
-  "name": "BD Card Print Pro",
-  "description": "Generate print-ready, exact-size PDF layouts for Bangladesh ID cards and certificates with front and back support.",
-  "requestFramePermissions": []
+  "name": "Professional PDF Overlay Studio",
+  "description": "A production-grade PDF editor featuring multilingual RTL support, custom TTF font embedding, precise text overlay controls, and real-time page rendering.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

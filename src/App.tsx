@@ -16,13 +16,32 @@ import {
   Loader2,
   Calendar,
   RefreshCw,
-  ChevronRight,
+  Sparkles,
+  Eraser,
+  Brush,
+  Target,
+  Maximize2,
+  Square,
+  Circle,
+  Scissors,
   Calculator,
-  Image as ImageIcon
+  ChevronRight,
+  ImageIcon,
+  Scan,
+  Database,
+  AlertCircle,
+  PenTool,
+  Settings as SettingsIcon
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { CardSet, PrintSettings, PageSize, LayoutMode, PrintContent, PrintTemplate } from './types';
 import { generatePDF } from './lib/pdfGenerator';
+import { NIDScanner } from './components/NIDScanner';
+import { NIDDatabase } from './components/NIDDatabase';
+import { PDFEdit } from './components/PDFEdit';
+import { Settings } from './components/Settings';
+import { auth } from './firebase';
+import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 
 const INITIAL_SET: CardSet = {
   id: crypto.randomUUID(),
@@ -31,6 +50,8 @@ const INITIAL_SET: CardSet = {
   backImage: null,
   selected: true,
 };
+
+const ADMIN_EMAIL = 'stratproamz@gmail.com';
 
 const PRINT_TEMPLATES: PrintTemplate[] = [
   {
@@ -89,7 +110,21 @@ const PRINT_TEMPLATES: PrintTemplate[] = [
 ];
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'card-print' | 'age-calculator'>('card-print');
+  const [activeTab, setActiveTab] = useState<'card-print' | 'age-calculator' | 'gemini-watermark' | 'nid-scanner' | 'nid-database' | 'pdf-edit' | 'settings'>('card-print');
+  const [user, setUser] = useState(auth.currentUser);
+
+  useEffect(() => {
+    return auth.onAuthStateChanged((u) => setUser(u));
+  }, []);
+
+  const login = async () => {
+    try {
+      const provider = new GoogleAuthProvider();
+      await signInWithPopup(auth, provider);
+    } catch (err) {
+      console.error(err);
+    }
+  };
   const [sets, setSets] = useState<CardSet[]>([{ ...INITIAL_SET }]);
   const [settings, setSettings] = useState<PrintSettings>({
     pageSize: 'A4',
@@ -161,41 +196,119 @@ export default function App() {
           </div>
         </div>
 
-        <nav className="flex-1 p-4 space-y-2">
+        <nav className="flex-1 p-4 space-y-2 overflow-y-auto no-scrollbar">
           <button 
             onClick={() => setActiveTab('card-print')}
             className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium transition-all ${
               activeTab === 'card-print' 
-                ? 'bg-blue-50 text-blue-600 rounded-xl' 
+                ? 'bg-blue-50 text-blue-600 rounded-xl shadow-sm border border-blue-100' 
                 : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900 rounded-xl'
             }`}
           >
             <Layout className="w-4 h-4" />
             Card Print
           </button>
+          
+          <button 
+            onClick={() => setActiveTab('nid-scanner')}
+            className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium transition-all ${
+              activeTab === 'nid-scanner' 
+                ? 'bg-blue-50 text-blue-600 rounded-xl shadow-sm border border-blue-100' 
+                : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900 rounded-xl'
+            }`}
+          >
+            <Scan className="w-4 h-4" />
+            NID Scanner
+          </button>
+
+          {user?.email === ADMIN_EMAIL && (
+            <button 
+              onClick={() => setActiveTab('nid-database')}
+              className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium transition-all ${
+                activeTab === 'nid-database' 
+                  ? 'bg-blue-50 text-blue-600 rounded-xl shadow-sm border border-blue-100' 
+                  : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900 rounded-xl'
+              }`}
+            >
+              <Database className="w-4 h-4" />
+              NID Database
+            </button>
+          )}
+
+          <button 
+            onClick={() => setActiveTab('gemini-watermark')}
+            className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium transition-all ${
+              activeTab === 'gemini-watermark' 
+                ? 'bg-blue-50 text-blue-600 rounded-xl shadow-sm border border-blue-100' 
+                : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900 rounded-xl'
+            }`}
+          >
+            <Sparkles className="w-4 h-4" />
+            Gemini Clean
+          </button>
+
           <button 
             onClick={() => setActiveTab('age-calculator')}
             className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium transition-all ${
               activeTab === 'age-calculator' 
-                ? 'bg-blue-50 text-blue-600 rounded-xl' 
+                ? 'bg-blue-50 text-blue-600 rounded-xl shadow-sm border border-blue-100' 
                 : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900 rounded-xl'
             }`}
           >
             <Calendar className="w-4 h-4" />
             Age Calculator
           </button>
+
+          <button 
+            onClick={() => setActiveTab('pdf-edit')}
+            className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium transition-all ${
+              activeTab === 'pdf-edit' 
+                ? 'bg-blue-50 text-blue-600 rounded-xl shadow-sm border border-blue-100' 
+                : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900 rounded-xl'
+            }`}
+          >
+            <PenTool className="w-4 h-4" />
+            PDF Edit
+          </button>
+
+          <button 
+            onClick={() => setActiveTab('settings')}
+            className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium transition-all ${
+              activeTab === 'settings' 
+                ? 'bg-blue-50 text-blue-600 rounded-xl shadow-sm border border-blue-100' 
+                : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900 rounded-xl'
+            }`}
+          >
+            <SettingsIcon className="w-4 h-4" />
+            Settings
+          </button>
         </nav>
 
         <div className="p-4 border-t border-gray-100">
-          <div className="flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-xl">
-            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-600">
-              <User className="w-4 h-4" />
+          {user ? (
+            <div className="flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-xl group relative">
+              <div className="w-8 h-8 rounded-full overflow-hidden border border-blue-200">
+                <img src={user.photoURL || ''} alt="User" />
+              </div>
+              <div className="flex-1 overflow-hidden">
+                <p className="text-[10px] font-black uppercase text-slate-400">Authenticated</p>
+                <p className="text-xs font-bold text-slate-700 truncate">{user.displayName || 'Operator'}</p>
+              </div>
+              <button 
+                onClick={() => auth.signOut()}
+                className="opacity-0 group-hover:opacity-100 absolute -top-12 left-0 w-full py-2 bg-slate-900 text-white rounded-lg text-[10px] font-black uppercase tracking-widest transition-all hover:bg-red-600 shadow-xl"
+              >
+                Sign Out
+              </button>
             </div>
-            <div className="flex-1 overflow-hidden">
-              <p className="text-xs font-bold truncate">User</p>
-              <p className="text-[10px] text-gray-400 truncate">stratproamz@gmail.com</p>
-            </div>
-          </div>
+          ) : (
+            <button 
+              onClick={login}
+              className="w-full py-3 bg-slate-900 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-blue-600 transition-all shadow-xl shadow-slate-100"
+            >
+              Sign In
+            </button>
+          )}
         </div>
       </aside>
 
@@ -204,7 +317,13 @@ export default function App() {
         <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-gray-200">
           <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
             <h2 className="text-lg font-semibold tracking-tight">
-              {activeTab === 'card-print' ? 'BD Card Print Pro' : 'Age Calculator'}
+              {activeTab === 'card-print' ? 'BD Card Print Pro' : 
+               activeTab === 'age-calculator' ? 'Age Calculator' : 
+               activeTab === 'nid-scanner' ? 'NID Auto Scanner' :
+               activeTab === 'nid-database' ? 'Record Management' :
+               activeTab === 'pdf-edit' ? 'PDF Blueprint Editor' :
+               activeTab === 'settings' ? 'System Settings' :
+               'Gemini Clean & Inpaint'}
             </h2>
             <div className="flex items-center gap-4">
               {activeTab === 'card-print' && (
@@ -262,7 +381,7 @@ export default function App() {
                 exit={{ opacity: 0, y: -10 }}
                 className="max-w-5xl mx-auto px-6 py-10 grid grid-cols-1 lg:grid-cols-12 gap-10"
               >
-                {/* Left Column: Job Management */}
+                                {/* Left Column: Job Management */}
                 <div className="lg:col-span-8 space-y-8">
           {/* Live Preview Section */}
           <section className="bg-white p-8 border border-gray-100">
@@ -727,12 +846,80 @@ export default function App() {
             </div>
           </div>
         </div>
-      </motion.div>
-        ) : (
-          <AgeCalculator />
-        )}
-      </AnimatePresence>
-    </main>
+              </motion.div>
+            ) : activeTab === 'nid-scanner' ? (
+              <motion.div
+                key="nid-scanner"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="py-10"
+              >
+                {user ? (
+                  <NIDScanner />
+                ) : (
+                  <div className="flex flex-col items-center justify-center p-20 text-slate-400 text-center space-y-6">
+                    <Database className="w-20 h-20 opacity-20" />
+                    <h2 className="text-2xl font-black uppercase tracking-tighter">Login Required</h2>
+                    <p className="max-w-md text-slate-500 font-medium tracking-tight">Please log in with your Google account to access the NID Scanner and database features.</p>
+                    <button 
+                      onClick={login} 
+                      className="px-12 py-4 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest shadow-2xl hover:bg-blue-600 transition-all"
+                    >
+                      Login Now
+                    </button>
+                  </div>
+                )}
+              </motion.div>
+            ) : activeTab === 'nid-database' ? (
+              <motion.div
+                key="nid-database"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="py-10"
+              >
+                {user ? (
+                  user.email === ADMIN_EMAIL ? (
+                    <NIDDatabase />
+                  ) : (
+                    <div className="flex flex-col items-center justify-center p-20 text-slate-400 text-center space-y-6">
+                      <AlertCircle className="w-20 h-20 text-red-400 opacity-50" />
+                      <h2 className="text-2xl font-black uppercase tracking-tighter text-slate-800">Access Restricted</h2>
+                      <p className="max-w-md text-slate-500 font-medium tracking-tight">This database is reserved for the primary administrator only. Authorized personnel only.</p>
+                      <button 
+                        onClick={() => setActiveTab('nid-scanner')} 
+                        className="px-12 py-4 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest shadow-2xl hover:bg-blue-600 transition-all"
+                      >
+                        Return to Scanner
+                      </button>
+                    </div>
+                  )
+                ) : (
+                  <div className="flex flex-col items-center justify-center p-20 text-slate-400 text-center space-y-6">
+                    <Database className="w-20 h-20 opacity-20" />
+                    <h2 className="text-2xl font-black uppercase tracking-tighter">Login Required</h2>
+                    <p className="max-w-md text-slate-500 font-medium tracking-tight">Please log in to manage your saved NID records.</p>
+                    <button 
+                      onClick={login} 
+                      className="px-12 py-4 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest shadow-2xl hover:bg-blue-600 transition-all"
+                    >
+                      Login Now
+                    </button>
+                  </div>
+                )}
+              </motion.div>
+            ) : activeTab === 'age-calculator' ? (
+              <AgeCalculator />
+            ) : activeTab === 'pdf-edit' ? (
+              <PDFEdit />
+            ) : activeTab === 'settings' ? (
+              <Settings onBack={() => setActiveTab('card-print')} />
+            ) : (
+              <GeminiWatermarkRemover />
+            )}
+          </AnimatePresence>
+        </main>
   </div>
 </div>
   );
@@ -1164,5 +1351,481 @@ function ImageUploader({ image, onUpload, onClear, settings, side }: {
         </div>
       )}
     </motion.div>
+  );
+}
+
+// --- Gemini Watermark Remover Component ---
+
+function GeminiWatermarkRemover() {
+  const [image, setImage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [isDetecting, setIsDetecting] = useState(false);
+  const [brushSize, setBrushSize] = useState(20);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const maskCanvasRef = useRef<HTMLCanvasElement>(null);
+  const [history, setHistory] = useState<string[]>([]);
+  const [tool, setTool] = useState<'brush' | 'eraser' | 'oval'>('brush');
+  const [zoom, setZoom] = useState(1);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const isDrawing = useRef(false);
+  const lastX = useRef<number | null>(null);
+  const lastY = useRef<number | null>(null);
+
+  const zoomToWatermark = (coords?: { x: number, y: number }) => {
+    if (!containerRef.current) return;
+    setZoom(1.8);
+    setTimeout(() => {
+      if (containerRef.current) {
+        const container = containerRef.current;
+        const scrollTargetX = coords ? coords.x * 1.8 : container.scrollWidth;
+        const scrollTargetY = coords ? coords.y * 1.8 : container.scrollHeight;
+        
+        container.scrollTo({
+          top: scrollTargetY - container.clientHeight / 2,
+          left: scrollTargetX - container.clientWidth / 2,
+          behavior: 'smooth'
+        });
+      }
+    }, 400);
+  };
+
+  // Robust canvas initialization
+  useEffect(() => {
+    if (image && canvasRef.current && maskCanvasRef.current) {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = canvasRef.current;
+        const maskCanvas = maskCanvasRef.current;
+        if (!canvas || !maskCanvas) return;
+        
+        canvas.width = img.width;
+        canvas.height = img.height;
+        maskCanvas.width = img.width;
+        maskCanvas.height = img.height;
+        
+        const ctx = canvas.getContext('2d');
+        const mCtx = maskCanvas.getContext('2d');
+        if (ctx && mCtx) {
+          ctx.drawImage(img, 0, 0);
+          mCtx.clearRect(0, 0, maskCanvas.width, maskCanvas.height);
+        }
+      };
+      img.src = image;
+    }
+  }, [image]);
+
+  useEffect(() => {
+    if (image && containerRef.current) {
+      zoomToWatermark();
+    }
+  }, [image === history[0]]); // Only auto-zoom on initial upload
+
+  const handleUpload = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const result = e.target?.result as string;
+      setImage(result);
+      setHistory([result]);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const startDrawing = (e: React.MouseEvent | React.TouchEvent) => {
+    isDrawing.current = true;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    const x = ((e.clientX || (e as any).touches?.[0]?.clientX) - rect.left) * (canvas.width / rect.width);
+    const y = ((e.clientY || (e as any).touches?.[0]?.clientY) - rect.top) * (canvas.height / rect.height);
+    lastX.current = x;
+    lastY.current = y;
+    draw(e);
+  };
+
+  const endDrawing = () => {
+    isDrawing.current = false;
+    lastX.current = null;
+    lastY.current = null;
+  };
+
+  const draw = (e: any) => {
+    if (!isDrawing.current || !maskCanvasRef.current || !canvasRef.current) return;
+    const canvas = canvasRef.current;
+    const mCtx = maskCanvasRef.current.getContext('2d');
+    if (!mCtx) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const x = ((e.clientX || e.touches?.[0]?.clientX) - rect.left) * (canvas.width / rect.width);
+    const y = ((e.clientY || e.touches?.[0]?.clientY) - rect.top) * (canvas.height / rect.height);
+
+    mCtx.lineJoin = 'round';
+    mCtx.lineCap = 'round';
+    mCtx.lineWidth = brushSize;
+
+    if (tool === 'brush') {
+      mCtx.globalCompositeOperation = 'source-over';
+      mCtx.strokeStyle = 'rgba(255, 0, 0, 0.5)';
+      mCtx.beginPath();
+      if (lastX.current !== null && lastY.current !== null) {
+        mCtx.moveTo(lastX.current, lastY.current);
+        mCtx.lineTo(x, y);
+      }
+      mCtx.stroke();
+      
+      mCtx.fillStyle = 'rgba(255, 0, 0, 0.5)';
+      mCtx.beginPath();
+      mCtx.arc(x, y, brushSize / 2, 0, Math.PI * 2);
+      mCtx.fill();
+    } else if (tool === 'eraser') {
+      mCtx.globalCompositeOperation = 'destination-out';
+      mCtx.strokeStyle = 'rgba(0, 0, 0, 1)';
+      mCtx.beginPath();
+      if (lastX.current !== null && lastY.current !== null) {
+        mCtx.moveTo(lastX.current, lastY.current);
+        mCtx.lineTo(x, y);
+      }
+      mCtx.stroke();
+      
+      mCtx.beginPath();
+      mCtx.arc(x, y, brushSize / 2, 0, Math.PI * 2);
+      mCtx.fill();
+    } else if (tool === 'oval') {
+        mCtx.globalCompositeOperation = 'source-over';
+        mCtx.fillStyle = 'rgba(255, 0, 0, 0.5)';
+        mCtx.beginPath();
+        mCtx.ellipse(x, y, brushSize, brushSize * 0.6, 0, 0, Math.PI * 2);
+        mCtx.fill();
+    }
+    
+    lastX.current = x;
+    lastY.current = y;
+  };
+
+  const autoDetect = async (shouldAutoRemove = false) => {
+    if (!image) return;
+    setIsDetecting(true);
+    setError(null);
+    try {
+      const res = await fetch('/api/detect-watermark', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image }),
+      });
+      
+      const data = await res.json();
+      
+      if (!res.ok) {
+        if (res.status === 503) {
+           throw new Error('Detection service is currently busy. Please wait a moment.');
+        }
+        throw new Error(data.error || 'Failed to detect watermark automatically.');
+      }
+
+      if (data.watermarks && data.watermarks.length > 0) {
+        const mCtx = maskCanvasRef.current?.getContext('2d');
+        if (mCtx && canvasRef.current) {
+          const { width, height } = canvasRef.current;
+          let firstWatermark: { x: number, y: number } | null = null;
+
+          data.watermarks.forEach(([ymin, xmin, ymax, xmax]: number[]) => {
+            const x = (xmin / 1000) * width;
+            const y = (ymin / 1000) * height;
+            const w = ((xmax - xmin) / 1000) * width;
+            const h = ((ymax - ymin) / 1000) * height;
+            
+            if (!firstWatermark) firstWatermark = { x: x + w/2, y: y + h/2 };
+
+            mCtx.fillStyle = 'rgba(255, 0, 0, 0.5)';
+            mCtx.fillRect(x - 5, y - 5, w + 10, h + 10);
+          });
+
+          if (firstWatermark) zoomToWatermark(firstWatermark);
+          if (shouldAutoRemove) setTimeout(() => performInpaint(), 600);
+        }
+      } else {
+         setError('No watermarks detected. Try using the Brush to manual mark.');
+      }
+    } catch (err: any) {
+      setError(err.message || 'Detection failed. Please try again.');
+      console.error(err);
+    } finally {
+      setIsDetecting(false);
+    }
+  };
+
+  const performInpaint = () => {
+    if (!canvasRef.current || !maskCanvasRef.current) return;
+    setIsProcessing(true);
+
+    // Use setTimeout to allow UI to show loader
+    setTimeout(() => {
+      try {
+        const canvas = canvasRef.current;
+        const maskCanvas = maskCanvasRef.current;
+        if (!canvas || !maskCanvas) return;
+        
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        const mCtx = maskCanvas.getContext('2d', { willReadFrequently: true });
+
+        if (!ctx || !mCtx) return;
+
+        const width = canvas.width;
+        const height = canvas.height;
+        const imgData = ctx.getImageData(0, 0, width, height);
+        const maskData = mCtx.getImageData(0, 0, width, height);
+        const pixels = imgData.data;
+        const maskPixels = maskData.data;
+        
+        // Working copy of mask to track propagation
+        const workingMask = new Uint8Array(maskPixels);
+
+        // Check if there is anything to inpaint
+        let hasMask = false;
+        for (let i = 3; i < maskPixels.length; i += 4) {
+          if (maskPixels[i] > 10) { // Small threshold for noise
+            hasMask = true;
+            break;
+          }
+        }
+
+        if (!hasMask) {
+          alert('Please paint over the watermark area first using the Brush tool.');
+          return;
+        }
+
+        const iterations = 60; 
+        for (let it = 0; it < iterations; it++) {
+            let anyFilled = false;
+            for (let y = 0; y < height; y++) {
+                for (let x = 0; x < width; x++) {
+                    const idx = (y * width + x) * 4;
+                    if (workingMask[idx + 3] > 0) {
+                        let r = 0, g = 0, b = 0, weightSum = 0;
+                        
+                        // Square searching for neighbors - more robust than just 8 points
+                        const searchRadius = it < 10 ? 2 : 5;
+                        for (let dy = -searchRadius; dy <= searchRadius; dy++) {
+                          for (let dx = -searchRadius; dx <= searchRadius; dx++) {
+                            if (dx === 0 && dy === 0) continue;
+                            const nx = x + dx;
+                            const ny = y + dy;
+                            if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
+                              const nIdx = (ny * width + nx) * 4;
+                              if (workingMask[nIdx + 3] === 0) {
+                                const dist = Math.sqrt(dx*dx + dy*dy);
+                                const weight = 1 / (dist + 0.5);
+                                r += pixels[nIdx] * weight;
+                                g += pixels[nIdx+1] * weight;
+                                b += pixels[nIdx+2] * weight;
+                                weightSum += weight;
+                              }
+                            }
+                          }
+                        }
+
+                        if (weightSum > 1.5) {
+                            pixels[idx] = r / weightSum;
+                            pixels[idx+1] = g / weightSum;
+                            pixels[idx+2] = b / weightSum;
+                            workingMask[idx + 3] = 0;
+                            anyFilled = true;
+                        }
+                    }
+                }
+            }
+            if (!anyFilled) break;
+        }
+
+        // Adaptive Grain Synthesis and final blending
+        for (let i = 0; i < pixels.length; i += 4) {
+            if (maskPixels[i + 3] > 0) {
+                const grain = (Math.random() - 0.5) * 6;
+                pixels[i] = Math.min(255, Math.max(0, pixels[i] + grain));
+                pixels[i+1] = Math.min(255, Math.max(0, pixels[i+1] + grain));
+                pixels[i+2] = Math.min(255, Math.max(0, pixels[i+2] + grain));
+            }
+        }
+
+        ctx.putImageData(imgData, 0, 0);
+        mCtx.clearRect(0, 0, width, height);
+        
+        const newResult = canvas.toDataURL('image/png');
+        setHistory(prev => [...prev, newResult]);
+        setImage(newResult);
+      } catch (err) {
+        console.error('Inpainting error:', err);
+        alert('An error occurred during image processing.');
+      } finally {
+        setIsProcessing(false);
+      }
+    }, 50);
+  };
+
+  const undo = () => {
+    if (history.length > 1) {
+      const newHistory = history.slice(0, -1);
+      const last = newHistory[newHistory.length - 1];
+      setHistory(newHistory);
+      setImage(null); // Force re-render to trigger useEffect cleanly
+      setTimeout(() => setImage(last), 10);
+    }
+  };
+
+  return (
+    <div className="max-w-6xl mx-auto px-6 py-10 space-y-8">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-200">
+            <Eraser className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tight">Gemini Watermark Remover</h2>
+            <p className="text-sm text-slate-400 font-bold">Texture-Aware Inpainting Engine (নির্ভুল ইনপেইন্টিং)</p>
+          </div>
+        </div>
+        
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={undo}
+            disabled={history.length <= 1}
+            className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-50 transition-all disabled:opacity-50"
+          >
+            <RefreshCw className="w-3 h-3" />
+            Undo
+          </button>
+          <button 
+            onClick={() => {
+                const link = document.createElement('a');
+                link.download = 'cleaned-image.png';
+                link.href = image || '';
+                link.click();
+            }}
+            disabled={!image}
+            className="flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold hover:bg-blue-700 transition-all shadow-md shadow-blue-100 disabled:opacity-50"
+          >
+            <Download className="w-3 h-3" />
+            Download
+          </button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <div className="lg:col-span-3 space-y-6">
+          <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm space-y-6">
+            <div className="space-y-4">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Brush: {brushSize}px</label>
+              <input 
+                type="range" 
+                min="5" 
+                max="100" 
+                value={brushSize}
+                onChange={(e) => setBrushSize(parseInt(e.target.value))}
+                className="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-blue-600"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              <button 
+                onClick={() => setTool('brush')}
+                className={`flex flex-col items-center gap-2 p-3 rounded-2xl border transition-all ${tool === 'brush' ? 'bg-blue-50 border-blue-200 text-blue-600' : 'bg-slate-50 border-transparent text-slate-400'}`}
+              >
+                <Brush className="w-4 h-4" />
+                <span className="text-[9px] font-black uppercase">Brush</span>
+              </button>
+              <button 
+                onClick={() => setTool('oval')}
+                className={`flex flex-col items-center gap-2 p-3 rounded-2xl border transition-all ${tool === 'oval' ? 'bg-blue-50 border-blue-200 text-blue-600' : 'bg-slate-50 border-transparent text-slate-400'}`}
+              >
+                <Target className="w-4 h-4" />
+                <span className="text-[9px] font-black uppercase">Marker</span>
+              </button>
+            </div>
+
+            <div className="space-y-3 pt-4 border-t border-slate-50">
+              {error && (
+                <div className="p-3 bg-red-50 text-red-600 rounded-xl flex items-center gap-2 text-[10px] font-bold border border-red-100 mb-4">
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  {error}
+                </div>
+              )}
+              <button 
+                onClick={() => autoDetect(false)}
+                disabled={!image || isDetecting}
+                className="w-full flex items-center justify-center gap-2 py-4 bg-amber-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-md shadow-amber-100 disabled:opacity-50"
+              >
+                {isDetecting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                Auto Detect
+              </button>
+              <button 
+                onClick={() => autoDetect(true)}
+                disabled={!image || isDetecting || isProcessing}
+                className="w-full flex items-center justify-center gap-2 py-4 bg-teal-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-md shadow-teal-100 disabled:opacity-50"
+              >
+                {isDetecting || isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+                Auto Clean
+              </button>
+              <button 
+                onClick={performInpaint}
+                disabled={!image || isProcessing}
+                className="w-full flex items-center justify-center gap-2 py-4 bg-emerald-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-md shadow-emerald-100 disabled:opacity-50"
+              >
+                {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Scissors className="w-4 h-4" />}
+                Manual Remove
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="lg:col-span-9 bg-white p-4 rounded-[2.5rem] border border-slate-100 shadow-xl min-h-[500px] flex flex-col items-center justify-center relative overflow-hidden">
+          {!image ? (
+            <div className="w-full h-full border-4 border-dashed border-slate-50 rounded-[2rem] flex flex-col items-center justify-center gap-4 cursor-pointer hover:bg-slate-50 transition-all relative">
+              <input 
+                type="file" 
+                className="absolute inset-0 opacity-0 cursor-pointer"
+                onChange={(e) => e.target.files?.[0] && handleUpload(e.target.files[0])}
+              />
+              <Upload className="w-10 h-10 text-slate-200" />
+              <div className="text-center">
+                 <p className="text-lg font-black text-slate-700">Upload to Clean</p>
+                 <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Supports JPEG, PNG</p>
+              </div>
+            </div>
+          ) : (
+            <div 
+              id="gemini-watermark-image-container"
+              ref={containerRef}
+              className="relative w-full h-full overflow-auto p-8"
+            >
+              <div className="flex items-center justify-center min-w-max min-h-max">
+                <div 
+                  className="relative shadow-2xl transition-transform duration-300"
+                  style={{ 
+                    transform: `scale(${zoom})`,
+                    transformOrigin: 'center center'
+                  }}
+                >
+                  <canvas 
+                    ref={canvasRef}
+                    className="cursor-crosshair bg-slate-50 block"
+                    onMouseDown={startDrawing}
+                    onMouseMove={draw}
+                    onMouseUp={endDrawing}
+                    onMouseLeave={endDrawing}
+                    onTouchStart={startDrawing}
+                    onTouchMove={draw}
+                    onTouchEnd={endDrawing}
+                  />
+                  <canvas 
+                    ref={maskCanvasRef}
+                    className="absolute inset-0 pointer-events-none opacity-50 block"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }

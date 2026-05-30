@@ -1,0 +1,39 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function isValidNIDInfo(data) {
+      return data.keys().hasAll(['nameBangla', 'nameEnglish', 'dob', 'nidNumber']) &&
+             data.nameBangla is string &&
+             data.nameEnglish is string &&
+             data.dob is string &&
+             data.nidNumber is string;
+    }
+
+    match /nids/{nidId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && isValidNIDInfo(incoming());
+      allow update: if isSignedIn() && isValidNIDInfo(incoming());
+      allow delete: if isSignedIn();
+    }
+    
+    match /test/connection {
+      allow read: if true;
+    }
+  }
+}
